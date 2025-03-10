@@ -7,6 +7,7 @@ import os
 
 # フォント設定
 font_path = os.path.abspath("ipaexg.ttf")  # 絶対パス
+font_prop = None
 if os.path.exists(font_path):
     font_prop = fm.FontProperties(fname=font_path)
     mpl.rcParams["font.family"] = font_prop.get_name()
@@ -57,10 +58,17 @@ if len(data_frames) > 1:
         else:
             st.warning(f"列 '{col}' が一部のデータに存在しません。")
 
-    plt.xlabel("経過年数", fontproperties=font_prop)
-    plt.ylabel("スコア", fontproperties=font_prop)
-    plt.title("発達段階の推移", fontproperties=font_prop)
-    plt.legend(prop=font_prop)
+    if font_prop:
+        plt.xlabel("経過年数", fontproperties=font_prop)
+        plt.ylabel("スコア", fontproperties=font_prop)
+        plt.title("発達段階の推移", fontproperties=font_prop)
+        plt.legend(prop=font_prop)
+    else:
+        plt.xlabel("経過年数")
+        plt.ylabel("スコア")
+        plt.title("発達段階の推移")
+        plt.legend()
+    
     plt.grid()
     st.pyplot(plt)
 else:
