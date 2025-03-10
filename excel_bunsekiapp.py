@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 # フォント設定
-font_path = os.path.abspath("ipaexg.ttf")  # 絶対パス
+font_path = os.path.abspath("ipaexg.ttf")
 font_prop = None
 if os.path.exists(font_path):
     font_prop = fm.FontProperties(fname=font_path)
@@ -40,9 +40,12 @@ for i, file in uploaded_files.items():
     if file is not None:
         df = pd.read_excel(file, sheet_name=0, usecols="A:D", skiprows=1, nrows=12)
         df.columns = df.columns.str.strip()  # 列名の前後の空白を削除
-        data_frames.append(df)
-        date_label = date_inputs[i] if date_inputs[i] else f"{i+1}回目"
-        labels.append(date_label)
+        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)  # セルの空白削除
+        df = df.fillna(0)  # NaNを0に置換
+        if not df.empty:
+            data_frames.append(df)
+            date_label = date_inputs[i] if date_inputs[i] else f"{i+1}回目"
+            labels.append(date_label)
 
 # データが複数ある場合、比較分析を行う
 if len(data_frames) > 1:
@@ -61,16 +64,23 @@ if len(data_frames) > 1:
 
     common_columns = sorted(common_columns)  # 一貫性のためソート
 
-    # 各データの平均値を計算
-    averages = [df[common_columns].mean(numeric_only=True) for df in data_frames]
-    
+    # 平均値の計算（NaNを除去）
+    averages = []
+    for df in data_frames:
+        avg = df[common_columns].mean(numeric_only=True)
+        avg = avg.fillna(0)  # NaNを0にする
+        averages.append(avg)
+
     # デバッグ用: 計算された平均値を表示
     st.write("**デバッグ情報: 計算された平均値**", averages)
 
     # 推移の折れ線グラフ
     plt.figure(figsize=(8, 5))
     for col in common_columns:
-        plt.plot(labels, [avg[col] for avg in averages], marker="o", label=col)
+        try:
+            plt.plot(labels, [avg[col] for avg in averages], marker="o", label=col)
+        except KeyError:
+            st.warning(f"列 '{col}' が一部のデータに存在しません。")
 
     if font_prop:
         plt.xlabel("経過年数", fontproperties=font_prop)
@@ -94,7 +104,7 @@ if len(data_frames) > 1:
         st.write("### 最新の発達段階（レーダーチャート）")
 
         # 各能力の平均値を計算
-        radar_values = latest_df.mean(numeric_only=True).values
+        radar_values = latest_df.mean(numeric_only=True).fillna(0).values
         radar_labels = latest_df.columns
 
         # レーダーチャートの作成
