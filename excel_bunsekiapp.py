@@ -62,11 +62,13 @@ if len(data_frames) > 1:
         plt.xlabel("経過年数", fontproperties=font_prop)
         plt.ylabel("スコア", fontproperties=font_prop)
         plt.title("発達段階の推移", fontproperties=font_prop)
+        plt.xticks(ticks=range(len(labels)), labels=labels, fontproperties=font_prop)
         plt.legend(prop=font_prop)
     else:
         plt.xlabel("経過年数")
         plt.ylabel("スコア")
         plt.title("発達段階の推移")
+        plt.xticks(ticks=range(len(labels)), labels=labels)
         plt.legend()
     
     plt.grid()
