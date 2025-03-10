@@ -19,18 +19,17 @@ else:
 
 st.title("発達段階の推移分析")
 
-# アップロード用の辞書を用意
+# UIの整理（3列レイアウト）
+cols = st.columns(3)
+
 uploaded_files = {}
 date_inputs = {}
 
-# UIのレイアウトを改善（横並びにする）
-st.write("### データアップロード")
-cols = st.columns(3)  # 3列レイアウト
-
+# 各時点のデータをアップロード
 for i in range(12):
-    with cols[i % 3]:  # 3列に分割して配置
-        uploaded_files[i] = st.file_uploader(f"{i+1}回目のデータ", type=["xlsx", "xls"], key=f"file_{i}")
-        date_inputs[i] = st.text_input(f"日付 (YYYY-MM-DD)", key=f"date_{i}")
+    with cols[i % 3]:  # 3列で横に並べる
+        uploaded_files[i] = st.file_uploader(f"{i+1}回目の発達段階", type=["xlsx", "xls"], key=f"file_{i}")
+        date_inputs[i] = st.text_input(f"{i+1}回目の日付（YYYY-MM-DD）", key=f"date_{i}")
 
 # アップロードされたデータを格納するリスト
 data_frames = []
@@ -40,7 +39,7 @@ labels = []
 for i, file in uploaded_files.items():
     if file is not None:
         df = pd.read_excel(file, sheet_name=0, usecols="A:D", skiprows=1, nrows=12)
-        df.columns = df.columns.str.strip()
+        df.columns = df.columns.str.strip()  # 列名の前後の空白を削除
         data_frames.append(df)
         date_label = date_inputs[i] if date_inputs[i] else f"{i+1}回目"
         labels.append(date_label)
@@ -54,10 +53,23 @@ if len(data_frames) > 1:
 
     # 推移をグラフで可視化
     st.write("### 発達段階の推移（平均値）")
-    averages = [df.mean(numeric_only=True) for df in data_frames]
+
+    # 共通のカラム名を取得（すべてのデータフレームで存在するカラムのみ）
+    common_columns = set(data_frames[0].columns)
+    for df in data_frames[1:]:
+        common_columns &= set(df.columns)  # 共通するカラムのみ残す
+
+    common_columns = sorted(common_columns)  # 一貫性のためソート
+
+    # 各データの平均値を計算
+    averages = [df[common_columns].mean(numeric_only=True) for df in data_frames]
     
+    # デバッグ用: 計算された平均値を表示
+    st.write("**デバッグ情報: 計算された平均値**", averages)
+
+    # 推移の折れ線グラフ
     plt.figure(figsize=(8, 5))
-    for col in data_frames[0].columns:
+    for col in common_columns:
         plt.plot(labels, [avg[col] for avg in averages], marker="o", label=col)
 
     if font_prop:
@@ -76,27 +88,30 @@ if len(data_frames) > 1:
     plt.grid()
     st.pyplot(plt)
 
-    # レーダーチャートで最新のデータを可視化
-    st.write("### 最新の発達段階（レーダーチャート）")
-    latest_df = data_frames[-1]
-    categories = latest_df.columns.tolist()
-    values = latest_df.mean(numeric_only=True).tolist()
-    values += values[:1]  # 閉じた形にするため最初の値を最後に追加
-    
-    angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
-    angles += angles[:1]  # 閉じた形にするため
-    
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-    ax.fill(angles, values, color='b', alpha=0.3)
-    ax.plot(angles, values, color='b', linewidth=2)
-    ax.set_yticklabels([])  # メモリを非表示
-    ax.set_xticks(angles[:-1])
-    
-    if font_prop:
-        ax.set_xticklabels(categories, fontproperties=font_prop)
-    else:
-        ax.set_xticklabels(categories)
-    
-    st.pyplot(fig)
+    # 最新のデータでレーダーチャートを作成
+    latest_df = data_frames[-1]  # 最新のデータ
+    if not latest_df.empty:
+        st.write("### 最新の発達段階（レーダーチャート）")
+
+        # 各能力の平均値を計算
+        radar_values = latest_df.mean(numeric_only=True).values
+        radar_labels = latest_df.columns
+
+        # レーダーチャートの作成
+        num_vars = len(radar_labels)
+        angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+        radar_values = np.concatenate((radar_values, [radar_values[0]]))  # 最後に最初の値を追加して閉じる
+        angles += angles[:1]  # 角度も閉じる
+
+        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+        ax.fill(angles, radar_values, color='blue', alpha=0.3)
+        ax.plot(angles, radar_values, color='blue', linewidth=2)
+
+        # ラベル設定
+        ax.set_yticklabels([])
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(radar_labels, fontproperties=font_prop if font_prop else None)
+
+        st.pyplot(fig)
 else:
     st.info("少なくとも2つのファイルをアップロードすると、推移を分析できます。")
