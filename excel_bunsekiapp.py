@@ -1,6 +1,19 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.font_manager as fm
+import os
+
+# フォント設定
+font_path = os.path.abspath("ipaexg.ttf")  # 絶対パス
+if os.path.exists(font_path):
+    font_prop = fm.FontProperties(fname=font_path)
+    mpl.rcParams["font.family"] = font_prop.get_name()
+    plt.rc("font", family=font_prop.get_name())  # 追加
+    st.write(f"✅ フォント設定: {mpl.rcParams['font.family']}")
+else:
+    st.error("❌ フォントファイルが見つかりません。")
 
 st.title("発達段階の推移分析")
 
@@ -44,10 +57,10 @@ if len(data_frames) > 1:
         else:
             st.warning(f"列 '{col}' が一部のデータに存在しません。")
 
-    plt.xlabel("経過年数")
-    plt.ylabel("スコア")
-    plt.title("発達段階の推移")
-    plt.legend()
+    plt.xlabel("経過年数", fontproperties=font_prop)
+    plt.ylabel("スコア", fontproperties=font_prop)
+    plt.title("発達段階の推移", fontproperties=font_prop)
+    plt.legend(prop=font_prop)
     plt.grid()
     st.pyplot(plt)
 else:
