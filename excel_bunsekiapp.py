@@ -20,10 +20,12 @@ st.title("発達段階の推移分析")
 
 # アップロード用の辞書を用意
 uploaded_files = {}
+date_inputs = {}
 
-# 各時点のデータをアップロード
-for i in range(6):
-    uploaded_files[i] = st.file_uploader(f"アップロードボタン {i+1}（{i}年目の発達段階）", type=["xlsx", "xls"], key=f"file_{i}")
+# 各時点のデータをアップロードし、日付を入力できるようにする
+for i in range(12):
+    uploaded_files[i] = st.file_uploader(f"アップロードボタン {i+1}（{i}回目の発達段階）", type=["xlsx", "xls"], key=f"file_{i}")
+    date_inputs[i] = st.text_input(f"{i+1}回目の日付（YYYY-MM-DD）", key=f"date_{i}")
 
 # アップロードされたデータを格納するリスト
 data_frames = []
@@ -35,7 +37,8 @@ for i, file in uploaded_files.items():
         df = pd.read_excel(file, sheet_name=0, usecols="A:D", skiprows=1, nrows=12)
         df.columns = df.columns.str.strip()  # 列名の前後の空白を削除
         data_frames.append(df)
-        labels.append(f"{i+1}回目")
+        date_label = date_inputs[i] if date_inputs[i] else f"{i+1}回目"
+        labels.append(date_label)
 
 # データが複数ある場合、比較分析を行う
 if len(data_frames) > 1:
@@ -62,13 +65,13 @@ if len(data_frames) > 1:
         plt.xlabel("経過年数", fontproperties=font_prop)
         plt.ylabel("スコア", fontproperties=font_prop)
         plt.title("発達段階の推移", fontproperties=font_prop)
-        plt.xticks(ticks=range(len(labels)), labels=labels, fontproperties=font_prop)
+        plt.xticks(ticks=range(len(labels)), labels=labels, fontproperties=font_prop, rotation=45)
         plt.legend(prop=font_prop)
     else:
         plt.xlabel("経過年数")
         plt.ylabel("スコア")
         plt.title("発達段階の推移")
-        plt.xticks(ticks=range(len(labels)), labels=labels)
+        plt.xticks(ticks=range(len(labels)), labels=labels, rotation=45)
         plt.legend()
     
     plt.grid()
