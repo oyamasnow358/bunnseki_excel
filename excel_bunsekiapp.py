@@ -35,7 +35,7 @@ for i, file in uploaded_files.items():
         df = pd.read_excel(file, sheet_name=0, usecols="A:D", skiprows=1, nrows=12)
         df.columns = df.columns.str.strip()  # 列名の前後の空白を削除
         data_frames.append(df)
-        labels.append(f"{i}年目")
+        labels.append(f"{i+1}回目")
 
 # データが複数ある場合、比較分析を行う
 if len(data_frames) > 1:
