@@ -19,6 +19,7 @@ labels = []
 for i, file in uploaded_files.items():
     if file is not None:
         df = pd.read_excel(file, sheet_name=0, usecols="A:D", skiprows=1, nrows=12)
+        df.columns = df.columns.str.strip()  # 列名の前後の空白を削除
         data_frames.append(df)
         labels.append(f"{i}年目")
 
@@ -34,10 +35,14 @@ if len(data_frames) > 1:
 
     # 各データの平均値を計算
     averages = [df.mean(numeric_only=True) for df in data_frames]
+    st.write("**デバッグ情報: 計算された平均値**", averages)  # デバッグ用出力
     
     plt.figure(figsize=(8, 5))
     for col in data_frames[0].columns:
-        plt.plot(labels, [avg[col] for avg in averages], marker="o", label=col)
+        if all(col in avg for avg in averages):  # すべての平均データに `col` があるか確認
+            plt.plot(labels, [avg[col] for avg in averages], marker="o", label=col)
+        else:
+            st.warning(f"列 '{col}' が一部のデータに存在しません。")
 
     plt.xlabel("経過年数")
     plt.ylabel("スコア")
@@ -45,6 +50,5 @@ if len(data_frames) > 1:
     plt.legend()
     plt.grid()
     st.pyplot(plt)
-
 else:
     st.info("少なくとも2つのファイルをアップロードすると、推移を分析できます。")
