@@ -80,7 +80,7 @@ if len(data_frames) > 1:
         try:
             plt.plot(labels, [avg[col] for avg in averages], marker="o", label=col)
         except KeyError:
-            st.warning(f"列 '{col}' が一部のデータに存在しません。")
+             pass  # エラーを無視して続行
 
     if font_prop:
         plt.xlabel("経過年数", fontproperties=font_prop)
