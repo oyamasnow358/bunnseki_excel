@@ -76,13 +76,17 @@ for col in common_columns:
         st.error(f"項目 '{col}' で数値以外のデータが検出されました: {e}")
         continue
 
-    # グラフを描画
-    plt.figure(figsize=(8, 5))
-    try:
-        plt.plot(labels, [avg[selected_col] for avg in averages if selected_col in avg], marker="o", label=selected_col)
-    except KeyError:
-        st.warning(f"列 '{selected_col}' が一部のデータに存在しません。")
+    # averages のデバッグ
+st.write("デバッグ: averages の内容", averages)
 
+# 選択した項目が averages に含まれているかチェック
+valid_values = [avg[selected_col] for avg in averages if selected_col in avg]
+
+if not valid_values:
+    st.error(f"選択した項目 '{selected_col}' のデータが見つかりません。")
+else:
+    plt.figure(figsize=(8, 5))
+    plt.plot(labels, valid_values, marker="o", label=selected_col)
     plt.xlabel("経過年数", fontproperties=font_prop if font_prop else None)
     plt.ylabel("スコア", fontproperties=font_prop if font_prop else None)
     plt.title("発達段階の推移", fontproperties=font_prop if font_prop else None)
