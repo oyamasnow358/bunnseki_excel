@@ -59,18 +59,22 @@ else:
         averages.append(avg)
 
     # 変化のあった項目を検出
-    changes = {}
-    for col in common_columns:
-        values = [avg[col] for avg in averages if col in avg]
+changes = {}
+for col in common_columns:
+    values = [avg[col] for avg in averages if col in avg]
+
+    # 値が空ならスキップ
+    if not values:
+        st.warning(f"項目 '{col}' のデータがありません。")
+        continue
+
+    # 数値データでない場合はエラーを回避
+    try:
         if max(values) - min(values) > 0:  # 変化があるかチェック
             changes[col] = values
-    
-    if changes:
-        st.write("### 変化のあった項目")
-        for col, values in changes.items():
-            st.write(f"- **{col}**: {values}")
-
-    selected_col = st.selectbox("表示する項目を選択", common_columns)
+    except ValueError as e:
+        st.error(f"項目 '{col}' で数値以外のデータが検出されました: {e}")
+        continue
 
     # グラフを描画
     plt.figure(figsize=(8, 5))
