@@ -96,27 +96,28 @@ if len(data_frames) > 1:
 
     latest_df = data_frames[-1]
     if not latest_df.empty:
-        st.write("### 最新の発達段階（レーダーチャート）")
+     st.write("### 最新の発達段階（レーダーチャート）")
 
-        radar_values = latest_df.mean(numeric_only=True).fillna(0).values
-        radar_labels = latest_df.columns
+    # 各能力の平均値を計算
+    radar_values = latest_df.mean(numeric_only=True).fillna(0).values
+    radar_labels = latest_df.columns
 
-        if len(radar_values) == len(radar_labels):
-            num_vars = len(radar_labels)
-            angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
-            radar_values = np.concatenate((radar_values, [radar_values[0]]))
-            angles += angles[:1]
+    num_vars = len(radar_labels)
 
-            fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-            ax.fill(angles, radar_values, color='blue', alpha=0.3)
-            ax.plot(angles, radar_values, color='blue', linewidth=2)
+    if num_vars > 1:  # 1つのデータしかないとエラーになるためチェック
+        angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+        radar_values = np.append(radar_values, radar_values[0])  # 最後に最初の値を追加して閉じる
+        angles.append(angles[0])  # 角度も閉じる
 
-            ax.set_yticklabels([])
-            ax.set_xticks(angles[:-1])
-            ax.set_xticklabels(radar_labels, fontproperties=font_prop if font_prop else None)
+        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+        ax.fill(angles, radar_values, color='blue', alpha=0.3)
+        ax.plot(angles, radar_values, color='blue', linewidth=2)
 
-            st.pyplot(fig)
-        else:
-            st.warning("レーダーチャートのデータ数が一致しません。表示できません。")
-else:
-    st.info("少なくとも2つのファイルをアップロードすると、推移を分析できます。")
+        # ラベル設定
+        ax.set_yticklabels([])
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(radar_labels, fontproperties=font_prop if font_prop else None)
+
+        st.pyplot(fig)
+    else:
+        st.warning("レーダーチャートを作成するには、最低2つの項目が必要です。")
