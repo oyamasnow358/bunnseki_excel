@@ -47,20 +47,12 @@ for i, file in uploaded_files.items():
             date_label = date_inputs[i] if date_inputs[i] else f"{i+1}回目"
             labels.append(date_label)
 
-if len(data_frames) > 1:
-    st.write("### 各時点のデータ")
-    for i, df in enumerate(data_frames):
-        st.write(f"#### {labels[i]}")
-        st.dataframe(df)
+# データフレームの共通カラムを取得
+common_columns = list(set.intersection(*(set(df.columns) for df in data_frames)))
 
-    st.write("### 発達段階の推移（平均値）")
-
-    common_columns = set(data_frames[0].columns)
-    for df in data_frames[1:]:
-        common_columns &= set(df.columns)
-
-    common_columns = sorted(common_columns)
-
+if not common_columns:
+    st.error("共通する項目がありません。データのフォーマットを確認してください。")
+else:
     averages = []
     for df in data_frames:
         avg = df[common_columns].mean(numeric_only=True).fillna(0)
@@ -69,7 +61,7 @@ if len(data_frames) > 1:
     # 変化のあった項目を検出
     changes = {}
     for col in common_columns:
-        values = [avg[col] for avg in averages]
+        values = [avg[col] for avg in averages if col in avg]
         if max(values) - min(values) > 0:  # 変化があるかチェック
             changes[col] = values
     
@@ -80,9 +72,10 @@ if len(data_frames) > 1:
 
     selected_col = st.selectbox("表示する項目を選択", common_columns)
 
+    # グラフを描画
     plt.figure(figsize=(8, 5))
     try:
-        plt.plot(labels, [avg[selected_col] for avg in averages], marker="o", label=selected_col)
+        plt.plot(labels, [avg[selected_col] for avg in averages if selected_col in avg], marker="o", label=selected_col)
     except KeyError:
         st.warning(f"列 '{selected_col}' が一部のデータに存在しません。")
 
