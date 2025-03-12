@@ -39,89 +39,84 @@ labels = []
 for i, file in uploaded_files.items():
     if file is not None:
         df = pd.read_excel(file, sheet_name=0, usecols="A:D", skiprows=1, nrows=12)
-        df.columns = df.columns.str.strip()  # 列名の前後の空白を削除
-        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)  # セルの空白削除
-        df = df.fillna(0)  # NaNを0に置換
+        df.columns = df.columns.str.strip()
+        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+        df = df.fillna(0)
         if not df.empty:
             data_frames.append(df)
             date_label = date_inputs[i] if date_inputs[i] else f"{i+1}回目"
             labels.append(date_label)
 
-# データが複数ある場合、比較分析を行う
 if len(data_frames) > 1:
     st.write("### 各時点のデータ")
     for i, df in enumerate(data_frames):
         st.write(f"#### {labels[i]}")
         st.dataframe(df)
 
-    # 推移をグラフで可視化
     st.write("### 発達段階の推移（平均値）")
 
-    # 共通のカラム名を取得（すべてのデータフレームで存在するカラムのみ）
     common_columns = set(data_frames[0].columns)
     for df in data_frames[1:]:
-        common_columns &= set(df.columns)  # 共通するカラムのみ残す
+        common_columns &= set(df.columns)
 
-    common_columns = sorted(common_columns)  # 一貫性のためソート
+    common_columns = sorted(common_columns)
 
-    # 平均値の計算（NaNを除去）
     averages = []
     for df in data_frames:
-        avg = df[common_columns].mean(numeric_only=True)
-        avg = avg.fillna(0)  # NaNを0にする
+        avg = df[common_columns].mean(numeric_only=True).fillna(0)
         averages.append(avg)
 
-    # デバッグ用: 計算された平均値を表示
-    st.write("**デバッグ情報: 計算された平均値**", averages)
-
-    # 推移の折れ線グラフ
-    plt.figure(figsize=(8, 5))
+    # 変化のあった項目を検出
+    changes = {}
     for col in common_columns:
-        try:
-            plt.plot(labels, [avg[col] for avg in averages], marker="o", label=col)
-        except KeyError:
-             pass  # エラーを無視して続行
-
-    if font_prop:
-        plt.xlabel("経過年数", fontproperties=font_prop)
-        plt.ylabel("スコア", fontproperties=font_prop)
-        plt.title("発達段階の推移", fontproperties=font_prop)
-        plt.xticks(ticks=range(len(labels)), labels=labels, fontproperties=font_prop, rotation=45)
-        plt.legend(prop=font_prop)
-    else:
-        plt.xlabel("経過年数")
-        plt.ylabel("スコア")
-        plt.title("発達段階の推移")
-        plt.xticks(ticks=range(len(labels)), labels=labels, rotation=45)
-        plt.legend()
+        values = [avg[col] for avg in averages]
+        if max(values) - min(values) > 0:  # 変化があるかチェック
+            changes[col] = values
     
+    if changes:
+        st.write("### 変化のあった項目")
+        for col, values in changes.items():
+            st.write(f"- **{col}**: {values}")
+
+    selected_col = st.selectbox("表示する項目を選択", common_columns)
+
+    plt.figure(figsize=(8, 5))
+    try:
+        plt.plot(labels, [avg[selected_col] for avg in averages], marker="o", label=selected_col)
+    except KeyError:
+        st.warning(f"列 '{selected_col}' が一部のデータに存在しません。")
+
+    plt.xlabel("経過年数", fontproperties=font_prop if font_prop else None)
+    plt.ylabel("スコア", fontproperties=font_prop if font_prop else None)
+    plt.title("発達段階の推移", fontproperties=font_prop if font_prop else None)
+    plt.xticks(ticks=range(len(labels)), labels=labels, rotation=45)
+    plt.legend()
     plt.grid()
     st.pyplot(plt)
 
-    # 最新のデータでレーダーチャートを作成
-    latest_df = data_frames[-1]  # 最新のデータ
+    latest_df = data_frames[-1]
     if not latest_df.empty:
         st.write("### 最新の発達段階（レーダーチャート）")
 
-        # 各能力の平均値を計算
         radar_values = latest_df.mean(numeric_only=True).fillna(0).values
         radar_labels = latest_df.columns
 
-        # レーダーチャートの作成
-        num_vars = len(radar_labels)
-        angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
-        radar_values = np.concatenate((radar_values, [radar_values[0]]))  # 最後に最初の値を追加して閉じる
-        angles += angles[:1]  # 角度も閉じる
+        if len(radar_values) == len(radar_labels):
+            num_vars = len(radar_labels)
+            angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+            radar_values = np.concatenate((radar_values, [radar_values[0]]))
+            angles += angles[:1]
 
-        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-        ax.fill(angles, radar_values, color='blue', alpha=0.3)
-        ax.plot(angles, radar_values, color='blue', linewidth=2)
+            fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+            ax.fill(angles, radar_values, color='blue', alpha=0.3)
+            ax.plot(angles, radar_values, color='blue', linewidth=2)
 
-        # ラベル設定
-        ax.set_yticklabels([])
-        ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(radar_labels, fontproperties=font_prop if font_prop else None)
+            ax.set_yticklabels([])
+            ax.set_xticks(angles[:-1])
+            ax.set_xticklabels(radar_labels, fontproperties=font_prop if font_prop else None)
 
-        st.pyplot(fig)
+            st.pyplot(fig)
+        else:
+            st.warning("レーダーチャートのデータ数が一致しません。表示できません。")
 else:
     st.info("少なくとも2つのファイルをアップロードすると、推移を分析できます。")
