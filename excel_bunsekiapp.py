@@ -1,35 +1,41 @@
-import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
-def load_data(file):
-    df = pd.read_excel(file, sheet_name=None)
-    return df
-
-def plot_growth(df, category):
-    if category not in df.columns:
-        st.error(f"選択したカテゴリ '{category}' はデータに含まれていません。")
-        return
+def load_and_process_data(directory, selected_column):
+    all_data = []
+    years = []
     
+    files = sorted([f for f in os.listdir(directory) if f.endswith('.xlsx')])
+    
+    for file in files:
+        year = file.split('.')[0]  # Assume file name format contains the year
+        df = pd.read_excel(os.path.join(directory, file))
+        
+        if selected_column in df.columns:
+            mean_value = df[selected_column].mean()
+            all_data.append(mean_value)
+            years.append(year)
+        else:
+            print(f"Warning: {selected_column} not found in {file}")
+    
+    return years, all_data
+
+def plot_growth_trend(years, data, selected_column):
     plt.figure(figsize=(10, 5))
-    plt.plot(df['年度'], df[category], marker='o', linestyle='-')
-    plt.xlabel('年度')
-    plt.ylabel(category)
-    plt.title(f'{category} の成長推移')
-    plt.grid()
-    st.pyplot(plt)
+    plt.plot(years, data, marker='o', linestyle='-', color='b')
+    plt.xlabel("Year")
+    plt.ylabel("Average Score")
+    plt.title(f"Growth Trend of {selected_column}")
+    plt.grid(True)
+    plt.show()
 
-st.title('成長傾向の可視化アプリ')
+# Example usage
+directory = "path_to_excel_files"  # Update with actual path
+selected_column = "言語理解"  # Change to desired analysis column
+years, data = load_and_process_data(directory, selected_column)
 
-uploaded_file = st.file_uploader("Excelファイルをアップロード", type=["xlsx", "xls"])
-
-if uploaded_file:
-    data = load_data(uploaded_file)
-    sheet_name = st.selectbox("シートを選択", list(data.keys()))
-    df = data[sheet_name]
-    
-    if '年度' not in df.columns:
-        st.error("データに '年度' カラムが見つかりません。")
-    else:
-        category = st.selectbox("表示する項目を選択", df.columns[1:])
-        plot_growth(df, category)
+if years and data:
+    plot_growth_trend(years, data, selected_column)
+else:
+    print("No valid data found for analysis.")
