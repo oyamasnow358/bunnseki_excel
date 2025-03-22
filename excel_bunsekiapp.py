@@ -52,7 +52,7 @@ for i, file in enumerate(uploaded_files):
         row = df[df.iloc[:, 0] == selected_category]
         if not row.empty:
             value = row.iloc[0, 1]  # B列の数値データ
-            data_list.append(value)
+            data_list.append(float(value))  # ← 数値として扱うため float に変換
             date_labels.append(dates[i] if dates[i] else f"{i+1}回目")
 
 # ------------------------------
@@ -66,7 +66,7 @@ if data_list:
     ax.set_ylabel("スコア", fontproperties=font_prop)
     ax.set_title(f"{selected_category}の成長傾向", fontproperties=font_prop)
     ax.set_xticklabels(date_labels, rotation=45, fontproperties=font_prop)
-    ax.legend()
+    ax.legend(prop=font_prop)  # ← 凡例のフォント設定を追加
     ax.grid(True)
 
     st.pyplot(fig)
