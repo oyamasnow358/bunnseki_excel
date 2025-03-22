@@ -58,7 +58,7 @@ for i, file in enumerate(uploaded_files):
 # ------------------------------
 # データがある場合のみ可視化
 if data_list:
-    st.subheader(f"{selected_category}の成長傾向")
+    st.subheader(f"{selected_category}の成長傾向", fontproperties=font_prop)
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(date_labels, data_list, marker="o", linestyle="-", color="b", label=selected_category)
@@ -66,7 +66,7 @@ if data_list:
     ax.set_ylabel("スコア", fontproperties=font_prop)
     ax.set_title(f"{selected_category}の成長傾向", fontproperties=font_prop)
     ax.set_xticklabels(date_labels, rotation=45, fontproperties=font_prop)
-    ax.legend()
+    ax.legend(prop=font_prop)  # ← 凡例のフォント設定を追加
     ax.grid(True)
 
     st.pyplot(fig)
