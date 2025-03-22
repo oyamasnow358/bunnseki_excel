@@ -43,16 +43,16 @@ data_list = []
 date_labels = []
 for i, file in enumerate(uploaded_files):
     if file is not None:
-        df = pd.read_excel(file, sheet_name=0, usecols="A:B", skiprows=1, nrows=12)  # ★ A列（項目） & B列（数値） を取得
+        df = pd.read_excel(file, sheet_name=0, usecols="A:B", skiprows=2, nrows=12)  # ★ B3:B14を正しく取得
         df.columns = df.columns.str.strip()
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         df = df.fillna(0)
 
-        # 選択した項目の B3:B14 のデータを取得
-        row = df[df.iloc[:, 0] == selected_category]  # A列から選択されたカテゴリを探す
+        # 選択した項目のデータを取得（A列が項目名、B列がスコア）
+        row = df[df.iloc[:, 0] == selected_category]
         if not row.empty:
-            values = row.iloc[:, 1].tolist()  # B列（B3:B14）の値を取得
-            data_list.extend(values)
+            values = row.iloc[:, 1].values  # B列（B3:B14）の値を取得
+            data_list.extend(values)  # Y軸に入れる値
             date_labels.extend([f"{dates[i]}-{j+3}" if dates[i] else f"{i+1}回目-{j+3}" for j in range(len(values))])
 
 # ------------------------------
