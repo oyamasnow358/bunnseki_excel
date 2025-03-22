@@ -58,7 +58,7 @@ for i, file in enumerate(uploaded_files):
 # ------------------------------
 # データがある場合のみ可視化
 if data_list:
-    st.subheader(f"{selected_category}の成長傾向", fontproperties=font_prop)
+    st.subheader(f"{selected_category}の成長傾向")
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(date_labels, data_list, marker="o", linestyle="-", color="b", label=selected_category)
