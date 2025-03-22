@@ -9,3 +9,4 @@ oauth2client
 matplotlib
 openpyxl
 seaborn
+scikit-learn
