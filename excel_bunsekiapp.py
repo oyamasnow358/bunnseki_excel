@@ -43,17 +43,17 @@ data_list = []
 date_labels = []
 for i, file in enumerate(uploaded_files):
     if file is not None:
-        df = pd.read_excel(file, sheet_name=0, usecols="A:D", skiprows=1, nrows=12)
+        df = pd.read_excel(file, sheet_name=0, usecols="A:B", skiprows=1, nrows=12)  # ★ A列（項目） & B列（数値） を取得
         df.columns = df.columns.str.strip()
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         df = df.fillna(0)
-        
-        # 選択した項目のデータを取得
-        row = df[df.iloc[:, 0] == selected_category]
+
+        # 選択した項目の B3:B14 のデータを取得
+        row = df[df.iloc[:, 0] == selected_category]  # A列から選択されたカテゴリを探す
         if not row.empty:
-            value = row.iloc[0, 1]  # B列の数値データ
-            data_list.append(value)
-            date_labels.append(dates[i] if dates[i] else f"{i+1}回目")
+            values = row.iloc[:, 1].tolist()  # B列（B3:B14）の値を取得
+            data_list.extend(values)
+            date_labels.extend([f"{dates[i]}-{j+3}" if dates[i] else f"{i+1}回目-{j+3}" for j in range(len(values))])
 
 # ------------------------------
 # データがある場合のみ可視化
@@ -62,11 +62,11 @@ if data_list:
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(date_labels, data_list, marker="o", linestyle="-", color="b", label=selected_category)
-    ax.set_xlabel("経過時間", fontproperties=font_prop)
+    ax.set_xlabel("測定回数", fontproperties=font_prop)
     ax.set_ylabel("スコア", fontproperties=font_prop)
     ax.set_title(f"{selected_category}の成長傾向", fontproperties=font_prop)
     ax.set_xticklabels(date_labels, rotation=45, fontproperties=font_prop)
-    ax.legend(prop=font_prop)  # ← 凡例のフォント設定を追加
+    ax.legend(prop=font_prop)
     ax.grid(True)
 
     st.pyplot(fig)
