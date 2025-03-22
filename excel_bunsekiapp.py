@@ -1,28 +1,35 @@
+import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-def analyze_development_chart(file_path):
-    # CSVデータの読み込み
-    df = pd.read_csv(file_path)
+def load_data(file):
+    df = pd.read_excel(file, sheet_name=None)
+    return df
+
+def plot_growth(df, category):
+    if category not in df.columns:
+        st.error(f"選択したカテゴリ '{category}' はデータに含まれていません。")
+        return
     
-    # 年ごとのデータが9年分あることを前提に整形
-    years = [f'Year{i}' for i in range(1, 10)]
-    df_long = df.melt(id_vars=['Category'], value_vars=years, 
-                       var_name='Year', value_name='Score')
-    
-    # 年の順序を整理
-    df_long['Year'] = df_long['Year'].str.extract(r'(\d+)').astype(int)
-    df_long = df_long.sort_values(by=['Category', 'Year'])
-    
-    # 可視化
-    plt.figure(figsize=(12, 6))
-    sns.lineplot(data=df_long, x='Year', y='Score', hue='Category', marker='o')
-    plt.title('Development Chart Over 9 Years')
-    plt.xlabel('Year')
-    plt.ylabel('Score')
-    plt.legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.figure(figsize=(10, 5))
+    plt.plot(df['年度'], df[category], marker='o', linestyle='-')
+    plt.xlabel('年度')
+    plt.ylabel(category)
+    plt.title(f'{category} の成長推移')
     plt.grid()
-    plt.show()
+    st.pyplot(plt)
+
+st.title('成長傾向の可視化アプリ')
+
+uploaded_file = st.file_uploader("Excelファイルをアップロード", type=["xlsx", "xls"])
+
+if uploaded_file:
+    data = load_data(uploaded_file)
+    sheet_name = st.selectbox("シートを選択", list(data.keys()))
+    df = data[sheet_name]
     
-    return df_long
+    if '年度' not in df.columns:
+        st.error("データに '年度' カラムが見つかりません。")
+    else:
+        category = st.selectbox("表示する項目を選択", df.columns[1:])
+        plot_growth(df, category)
