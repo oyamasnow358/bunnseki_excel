@@ -52,8 +52,14 @@ for i, file in enumerate(uploaded_files):
         row = df[df.iloc[:, 0] == selected_category]
         if not row.empty:
             value = row.iloc[0, 1]  # B列の数値データ
-            data_list.append(float(value))  # ← 数値として扱うため float に変換
-            date_labels.append(dates[i] if dates[i] else f"{i+1}回目")
+            
+            # 数値変換のチェック（エラー防止）
+            try:
+                value = float(value)
+                data_list.append(value)
+                date_labels.append(dates[i] if dates[i] else f"{i+1}回目")
+            except ValueError:
+                st.warning(f"{i+1}回目のデータが数値ではありません（スキップしました）。")
 
 # ------------------------------
 # データがある場合のみ可視化
