@@ -66,7 +66,7 @@ if data_list:
     ax.set_ylabel("スコア", fontproperties=font_prop)
     ax.set_title(f"{selected_category}の成長傾向", fontproperties=font_prop)
     ax.set_xticklabels(date_labels, rotation=45, fontproperties=font_prop)
-    ax.legend(prop=font_prop)  # ← 凡例のフォント設定を追加
+    ax.legend(fontproperties=font_prop)  # ← 凡例のフォント設定を追加
     ax.grid(True)
 
     st.pyplot(fig)
