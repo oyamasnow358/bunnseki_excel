@@ -53,7 +53,7 @@ for i, file in enumerate(uploaded_files):
         if not row.empty:
             values = row.iloc[:, 1].tolist()  # B列（B3:B14）の値を取得
             data_list.extend(values)
-            date_labels.extend([f"{dates[i]}-{j+3}" if dates[i] else f"{i+1}回目-{j+3}" for j in range(len(values))])
+            date_labels.extend([f"{dates[i]}-{j+3}" if dates[i] else f"{i+1}回目" for j in range(len(values))])
 
 # ------------------------------
 # データがある場合のみ可視化
