@@ -2,40 +2,37 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-def load_and_process_data(directory, selected_column):
+def load_data_from_excel(folder_path, target_column):
     all_data = []
-    years = []
     
-    files = sorted([f for f in os.listdir(directory) if f.endswith('.xlsx')])
+    for file in sorted(os.listdir(folder_path)):
+        if file.endswith(".xlsx"):
+            file_path = os.path.join(folder_path, file)
+            df = pd.read_excel(file_path)
+            
+            if target_column in df.columns:
+                year = file.split('.')[0]  # ファイル名から年を取得（例: "2015.xlsx" → "2015"）
+                all_data.append((year, df[target_column].mean()))  # 平均値を取得
+            else:
+                print(f"Warning: {file} に {target_column} が含まれていません")
     
-    for file in files:
-        year = file.split('.')[0]  # Assume file name format contains the year
-        df = pd.read_excel(os.path.join(directory, file))
-        
-        if selected_column in df.columns:
-            mean_value = df[selected_column].mean()
-            all_data.append(mean_value)
-            years.append(year)
-        else:
-            print(f"Warning: {selected_column} not found in {file}")
-    
-    return years, all_data
+    return pd.DataFrame(all_data, columns=['Year', 'Average']).sort_values(by='Year')
 
-def plot_growth_trend(years, data, selected_column):
+def plot_growth(data, target_column):
     plt.figure(figsize=(10, 5))
-    plt.plot(years, data, marker='o', linestyle='-', color='b')
-    plt.xlabel("Year")
-    plt.ylabel("Average Score")
-    plt.title(f"Growth Trend of {selected_column}")
-    plt.grid(True)
+    plt.plot(data['Year'], data['Average'], marker='o', linestyle='-')
+    plt.xlabel('Year')
+    plt.ylabel('Average Score')
+    plt.title(f'{target_column} Growth Over Time')
+    plt.xticks(rotation=45)
+    plt.grid()
     plt.show()
 
-# Example usage
-directory = "path_to_excel_files"  # Update with actual path
-selected_column = "言語理解"  # Change to desired analysis column
-years, data = load_and_process_data(directory, selected_column)
-
-if years and data:
-    plot_growth_trend(years, data, selected_column)
+# 使用例
+folder_path = "./data"  # データフォルダのパス
+target_column = "言語理解"  # 分析したい項目
+data = load_data_from_excel(folder_path, target_column)
+if not data.empty:
+    plot_growth(data, target_column)
 else:
-    print("No valid data found for analysis.")
+    print("データが見つかりませんでした")
